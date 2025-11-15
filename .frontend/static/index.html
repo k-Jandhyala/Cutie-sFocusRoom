@@ -160,7 +160,7 @@
             output.className = 'output-box loading';
             
             try {
-                const response = await fetch('http://localhost:5000/query', {
+                const response = await fetch('http://localhost:8000/query', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -174,7 +174,7 @@
                     output.textContent = data.response;
                     output.className = 'output-box';
                 } else {
-                    output.textContent = 'Error: ' + (data.error || 'Unknown error occurred');
+                    output.textContent = 'Error: ' + (data.detail || data.error || 'Unknown error occurred');
                     output.className = 'output-box error';
                 }
             } catch (error) {

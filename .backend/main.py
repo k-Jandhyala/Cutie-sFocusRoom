@@ -1,42 +1,34 @@
 import google.generativeai as genai
 
+# Configure Gemini API
 genai.configure(api_key="AIzaSyB8YWnoZe-Ry3_eFp8yYlvRCgd6_aY1YoA")
-
 model = genai.GenerativeModel("models/gemini-2.5-flash")
 
-response = model.generate_content("Write a short paragraph about AI.")
-print(response.text)
 
-
-class QueryRequest(BaseModel):
-    query: str
-
-# Response model
-class QueryResponse(BaseModel):
-    response: str
-    status: str
-
-@app.post("/query", response_model=QueryResponse)
-async def process_query(request: QueryRequest):
-    try:
-        if not request.query:
-            raise HTTPException(status_code=400, detail="No query provided")
+def get_gemini_response(query: str) -> str:
+    """
+    Send a query to Gemini and return the response text.
+    
+    Args:
+        query: The user's query string
         
-        print(f"Received query: {request.query}")
+    Returns:
+        The Gemini response text
         
-        # Send query to Gemini
-        response = model.generate_content(request.query)
-        
-        # Extract the text from the response
-        gemini_output = response.text
-        
-        print(f"Gemini response: {gemini_output}")
-        
-        return QueryResponse(
-            response=gemini_output,
-            status="success"
-        )
-        
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    Raises:
+        Exception: If there's an error generating the response
+    """
+    if not query or not query.strip():
+        raise ValueError("Query cannot be empty")
+    
+    print(f"Processing query: {query}")
+    
+    # Send query to Gemini
+    response = model.generate_content(query)
+    
+    # Extract the text from the response
+    gemini_output = response.text
+    
+    print(f"Gemini response received: {len(gemini_output)} characters")
+    
+    return gemini_output
