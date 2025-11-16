@@ -1,36 +1,53 @@
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 from matplotlib.gridspec import GridSpec
 import numpy as np
+import sqlite3
+import os
 
-#read mysql data
+# read data from mysql
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Memory.db")
+conn = sqlite3.connect(DB_FILE)
+cursor = conn.cursor()
 
-distractions1 = 2
-distractions2 = 1
-distractions3 = 0
-distractions4 = 5
-distractions5 = 2
+# Get last 5 sessions
+cursor.execute('''
+SELECT angry, stressed, happy, sad, focused, distractions
+FROM sessions
+ORDER BY id DESC
+LIMIT 5
+''')
+rows = cursor.fetchall()
+conn.close()
 
-total_focus = 70
-total_stress = 30
-total_anger = 20
-total_sadness = 25
-total_happiness = 80
+
+while len(rows) < 5:
+    rows.append((0, 0, 0, 0, 0, 0))
+
+
+distractions1, distractions2, distractions3, distractions4, distractions5 = [row[5] for row in reversed(rows)]
+
+
+session_numbers = [1, 2, 3, 4, 5]
+session_values = [distractions1, distractions2, distractions3, distractions4, distractions5]
+
+# emotion sums
+total_anger     = sum(row[0] for row in rows)
+total_stress    = sum(row[1] for row in rows)
+total_happiness = sum(row[2] for row in rows)
+total_sadness   = sum(row[3] for row in rows)
+total_focus     = sum(row[4] for row in rows)
 
 emotion_sum = total_focus + total_stress + total_anger + total_sadness + total_happiness
 
 # --- Top-left graph: Emotions ---
 emotions = ["Focused", "Stressed", "Angry", "Sad", "Happy"]
 emotion_values = [
-    100 * total_focus / emotion_sum,
-    100 * total_stress / emotion_sum,
-    100 * total_anger / emotion_sum,
-    100 * total_sadness / emotion_sum,
-    100 * total_happiness / emotion_sum
+    100 * total_focus / emotion_sum if emotion_sum else 0,
+    100 * total_stress / emotion_sum if emotion_sum else 0,
+    100 * total_anger / emotion_sum if emotion_sum else 0,
+    100 * total_sadness / emotion_sum if emotion_sum else 0,
+    100 * total_happiness / emotion_sum if emotion_sum else 0
 ]
-
-# --- Top-right graph: Sessions ---
-session_numbers = [1, 2, 3, 4, 5]
-session_values = [distractions1, distractions2, distractions3, distractions4, distractions5]
 
 # --- Bottom-left text ---
 max_emotion_index = np.argmax(emotion_values)
@@ -40,7 +57,7 @@ big_desc_1 = f"Highest Emotion: {emotions[max_emotion_index]}"
 big_value_2 = round(np.mean(session_values), 1)
 big_desc_2 = "Average Distractions:"
 
-# Create figure
+# ---------------- PLOT ----------------
 fig = plt.figure(figsize=(12, 8))
 gs = GridSpec(2, 2, figure=fig, height_ratios=[1.5, 1])  
 plt.subplots_adjust(hspace=0.4, wspace=0.3)  
