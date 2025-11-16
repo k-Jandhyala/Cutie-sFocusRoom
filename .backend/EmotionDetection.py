@@ -22,7 +22,7 @@ WINDOW_SIZE = 5
 emotion_window = deque(maxlen=WINDOW_SIZE)
 
 phone_visible_start = None
-DISTRACTION_THRESHOLD = 10  # seconds
+DISTRACTION_THRESHOLD = 4  # seconds
 
 yolo_model = YOLO("yolov8n.pt")
 
