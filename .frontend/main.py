@@ -294,7 +294,7 @@ async def get_productivity_advice(sessions_data: dict):
         
         # Import Gemini model from backend
         import google.generativeai as genai
-        genai.configure(api_key="AIzaSyB8YWnoZe-Ry3_eFp8yYlvRCgd6_aY1YoA")
+        genai.configure(api_key="YOUR_GEMINI_API_KEY")
         model = genai.GenerativeModel("models/gemini-2.5-flash")
         
         sessions = sessions_data.get("sessions", [])
