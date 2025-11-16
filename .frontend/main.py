@@ -11,6 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # Add the backend directory to the path so we can import it
 backend_path = os.path.join(os.path.dirname(__file__), '..', '.backend')
 sys.path.insert(0, backend_path)
+
+# Import EmotionDetection after adding backend to path
+from EmotionDetection import start_emotion_detection, stop_emotion_detection, set_video_websocket
 # Import backend module explicitly to avoid conflicts
 import importlib.util
 backend_spec = importlib.util.spec_from_file_location("backend_main", os.path.join(backend_path, "main.py"))
@@ -170,6 +173,10 @@ async def start_timer():
         timer_thread = threading.Thread(target=run_timer, daemon=True)
         timer_thread.start()
         
+        # Start emotion detection in a separate thread to avoid blocking
+        emotion_thread = threading.Thread(target=start_emotion_detection, daemon=True)
+        emotion_thread.start()
+        
         return {
             "status": "success",
             "message": "Timer started",
@@ -197,6 +204,40 @@ async def get_timer_state():
     """Get the current timer state for polling."""
     state = focus_reminders.get_timer_state()
     return state
+
+# WebSocket endpoint for video streaming
+@app.websocket("/ws/video")
+async def websocket_video(websocket: WebSocket):
+    """
+    WebSocket endpoint for streaming video frames from emotion detection.
+    """
+    client_host = websocket.client.host if hasattr(websocket, 'client') else 'unknown'
+    print(f"Video WebSocket connection attempt from {client_host}")
+    
+    await websocket.accept()
+    set_video_websocket(websocket)
+    print(f"✅ Video WebSocket client connected")
+    
+    try:
+        # Keep connection alive
+        while True:
+            # Wait for any message from client (ping/pong for keepalive)
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                # Handle ping messages
+                if message.get('type') == 'ping':
+                    await websocket.send_text(json.dumps({'type': 'pong'}))
+            except json.JSONDecodeError:
+                pass
+    except WebSocketDisconnect:
+        set_video_websocket(None)
+        print(f"❌ Video WebSocket client disconnected")
+    except Exception as e:
+        print(f"❌ Video WebSocket error: {e}")
+        import traceback
+        traceback.print_exc()
+        set_video_websocket(None)
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
