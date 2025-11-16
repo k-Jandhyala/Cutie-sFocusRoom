@@ -125,6 +125,7 @@ def _run_timer():
     # Send notification when timer starts
     if not timer_state["notifications_sent"]["timer_started"]:
         timer_state["notifications_sent"]["timer_started"] = True
+        print("Sending notification: Timer started")
         send_notification(
             "⏰ Timer Started!",
             f"Focusing for {FocusTime} seconds with {RestTime} second breaks every {RepeatTime} seconds!",
@@ -156,11 +157,16 @@ def _run_timer():
             # Check for 10 seconds before break starts (only if there's still focus time remaining after this cycle)
             # We're 10 seconds away from the end of this focus period
             # Send notification if: we're at the 10-second mark AND there's still focus time remaining after this cycle
-            # (i.e., focus_time_remaining will be > 0 after this cycle ends, meaning a break will follow)
+            # At the 10-second mark: focus_elapsed = focus_duration - 10
+            # At that point: focus_time_remaining = X - focus_elapsed = X - (focus_duration - 10) = X - focus_duration + 10
+            # After this cycle: focus_time_remaining = X - focus_duration
+            # We want a break if: X - focus_duration > 0, which means: focus_time_remaining > 10 at the 10-second mark
             if (not timer_state["notifications_sent"]["break_starting_10s"] and 
-                focus_elapsed == focus_duration - 10 and 
+                focus_elapsed >= focus_duration - 10 and 
+                focus_duration >= 10 and
                 timer_state["focus_time_remaining"] > 10):
                 timer_state["notifications_sent"]["break_starting_10s"] = True
+                print(f"Sending notification: 10 seconds before break starts (focus_elapsed={focus_elapsed}, focus_duration={focus_duration}, remaining={timer_state['focus_time_remaining']})")
                 send_notification(
                     "⏳ Rest Starting Soon!",
                     "Your break will begin in 10 seconds!",
@@ -175,6 +181,7 @@ def _run_timer():
             # Timer complete - send notification
             if not timer_state["notifications_sent"]["timer_complete"]:
                 timer_state["notifications_sent"]["timer_complete"] = True
+                print("Sending notification: Timer complete")
                 send_notification(
                     "🎉 Timer Complete!",
                     f"You've completed {FocusTime} seconds of focused work! Great job!",
@@ -195,6 +202,7 @@ def _run_timer():
             # Send notification when rest starts
             if not timer_state["notifications_sent"]["break_started"]:
                 timer_state["notifications_sent"]["break_started"] = True
+                print("Sending notification: Rest period started")
                 send_notification(
                     "🌿 Rest Period Started!",
                     f"Time for a {RestTime} second break!",
@@ -211,8 +219,10 @@ def _run_timer():
                 
                 # Check for 5 seconds before break ends
                 if (not timer_state["notifications_sent"]["break_ending_5s"] and 
-                    rest_elapsed >= RestTime - 5):
+                    rest_elapsed >= RestTime - 5 and
+                    RestTime >= 5):
                     timer_state["notifications_sent"]["break_ending_5s"] = True
+                    print(f"Sending notification: 5 seconds before break ends (rest_elapsed={rest_elapsed}, RestTime={RestTime})")
                     send_notification(
                         "⏳ Break Ending Soon!",
                         "Your break will end in 5 seconds! Get ready to focus!",
@@ -225,6 +235,7 @@ def _run_timer():
             # Send notification when rest ends
             if not timer_state["notifications_sent"]["break_ended"]:
                 timer_state["notifications_sent"]["break_ended"] = True
+                print("Sending notification: Break ended")
                 send_notification(
                     "✨ Break Finished!",
                     "Break complete! Ready to get back to work!",
