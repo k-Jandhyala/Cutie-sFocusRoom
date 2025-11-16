@@ -14,7 +14,7 @@ emotion_counts = {
     "happy": 0,
     "sad": 0,
     "focused": 0,
-    "distractions": 0     # <--- NEW KEY HERE
+    "distractions": 0     
 }
 
 WINDOW_SIZE = 5
