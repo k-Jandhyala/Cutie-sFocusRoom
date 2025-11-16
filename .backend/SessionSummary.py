@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.patches as patches
-#FIXme
-"""""
+import sqlite3
+import os
+
+
 from EmotionDetection import emotion_counts
 
-distracted = 35
+distracted = emotion_counts["distractions"]
 
 emotion_sum = emotion_counts["focused"] + emotion_counts["stressed"] 
 + emotion_counts["angry"] + emotion_counts["sad"] + emotion_counts["happy"]
@@ -16,18 +18,27 @@ values = [100 * emotion_counts["focused"] / emotion_sum,
           100 * emotion_counts["angry"] / emotion_sum, 
           100 * emotion_counts["sad"] / emotion_sum, 
           100 * emotion_counts["happy"] / emotion_sum]
-"""
-categories = ["Focused", "Stressed", "Angry", "Sad", "Happy"]
-values = [40, 
-          20, 
-          30, 
-          20, 
-          10]
 
-# import distractions from mysql
-distracted = 35.0                                 #FIXme
-distraction_vector = {1, 2, 3, 1,}                  #FIXme
-average = sum(distraction_vector) / len(distraction_vector)
+#read values from mysql
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Memory.db")
+
+# Connect to DB
+conn = sqlite3.connect(DB_FILE)
+cursor = conn.cursor()
+
+# Get the distractions from the last 5 sessions 
+cursor.execute('''
+SELECT distractions FROM sessions
+ORDER BY id DESC
+LIMIT 5
+''')
+rows = cursor.fetchall()
+
+distraction_vector = [row[0] for row in rows]
+
+conn.close()
+
+average = sum(distraction_vector) / len(distraction_vector) if distraction_vector else 0
 
 big_value = distracted
 big_value_description = "In this session\nyou were distracted:"
@@ -44,9 +55,8 @@ fantasy_colors = [
 ]
 
 
-# --------------------
+
 # Create the figure
-# --------------------
 fig = plt.figure(figsize=(12, 6))
 gs = GridSpec(1, 2, width_ratios=[1, 2], figure=fig)
 
@@ -55,9 +65,8 @@ gs = GridSpec(1, 2, width_ratios=[1, 2], figure=fig)
 fig.patch.set_facecolor("#F4EAD5")
 
 
-# --------------------
+
 # Left: Single clean text
-# --------------------
 ax_left = fig.add_subplot(gs[0])
 ax_left.axis("off")
 
@@ -77,9 +86,8 @@ ax_left.text(
     ha="center", va="center"
 )
 
-# --------------------
+
 # Right: Clean fantasy bar chart
-# --------------------
 ax_right = fig.add_subplot(gs[1])
 ax_right.set_facecolor("#F4EAD5")   # parchment interior
 
